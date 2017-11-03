@@ -1,1 +1,270 @@
-# h5Music
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title></title>
+		<link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.css"/>
+		<!--<link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"/>-->
+		<style type="text/css">
+			body {
+				padding-top: 70px;
+				padding-bottom: 70px;
+			}
+			.footer i{
+				color: #777;
+				font-size: 20px;
+				font-weight: 700;
+			}
+			.footer .c-icon-btn>a+a{
+				margin-left: 16px;
+			}
+			.ellipsis{
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			abbr[title], abbr[data-original-title] {
+			    cursor: pointer;
+			    border-bottom: none;
+			    text-decoration: none;
+			}
+			.thumbnail .caption+.caption {
+  			padding: 9px;
+		    color: #333;
+		    border-top: 1px dashed #ccc;
+			}
+			.thumbnail .caption h5{
+				font-size: 16px;
+			}
+			.thumbnail .caption p{
+				font-size: 13px;
+				color: #999;
+			}
+			.song-box:hover{
+				cursor: pointer;
+				-webkit-transform: translateY(-4px);
+				transform: translateY(-4px);
+				transition: transform .4s ease;
+				box-shadow: 0px 5px 5px 0px #ccc;
+			}
+			.list-group-item{
+				cursor: pointer;
+			}
+		</style>  
+		<script src="js/jquery.min.js" type="text/javascript"></script>
+	    <!--<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>-->
+		<script src="js/doT.min.js" type="text/javascript"></script>
+		<!--<script src="http://libs.cdnjs.net/dot/1.1.2/doT.min.js"></script>-->
+	</head>
+	<body>
+		<nav class="navbar navbar-default navbar-fixed-top">
+			<div class="container">
+				<div class="navbar-header">
+					<a class="navbar-brand" href="#">随意听</a>
+				</div>
+				<ul id="navListBox" class="nav navbar-nav"></ul>
+				<p class="navbar-text navbar-right">
+					<a href="javascript:;" class="navbar-link">登录</a>
+					<span>|</span>
+					<a href="javascript:;" class="navbar-link">注册</a>
+				</p>
+			</div>
+		</nav>
+		<nav class="navbar navbar-default navbar-fixed-bottom footer">
+			<div class="container">
+				<ul class="nav navbar-nav">
+					<!--上一曲-->
+					<li><a href="#"><i class="glyphicon glyphicon-step-backward"></i></a></li>
+					<!--播放-->
+					<li><a href="#"><i class="glyphicon glyphicon-play"></i></a></li>
+					<!--下一曲-->
+					<li><a href="#"><i class="glyphicon glyphicon-step-forward"></i></a></li>
+				</ul>
+				<div class="nav navbar-nav navbar-text" style="width: 60%;">
+					<div class="progress" style="display: inline-block;width: 60%;vertical-align: middle;height: 4px;margin-bottom: 0;">
+						<div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 40%;"></div>
+					</div>
+					<div style="display: inline-block;vertical-align: middle;"><span>00:00</span>/<span>00:00</span></div>
+					<div class="pull-right c-icon-btn">
+						<a href="#"><i class="glyphicon glyphicon-plus"></i></a>
+						<a href="#"><i class="glyphicon glyphicon-download-alt"></i></a>
+						<a href="#"><i class="glyphicon glyphicon-trash"></i></a>
+						<a href="#"><i class="glyphicon glyphicon-share"></i></a>
+					</div>
+				</div>
+				<ul class="nav navbar-nav navbar-right">
+					<div class="navbar-text">
+						<!--循环-->
+						<i class="glyphicon glyphicon-retweet" style="vertical-align: middle"></i>
+						<!--音量-->
+						<i class="glyphicon glyphicon-volume-up" style="vertical-align: middle;margin-left: 16px;"></i>
+						<!--音量进度条-->
+						<div class="progress" style="display: inline-block;width: 100px;vertical-align: middle;height: 4px;margin-bottom: 0;">
+							<div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
+						</div>
+					</div>
+				</ul>
+			</div>
+		</nav>
+		<div id="tjListBox" class="container"></div>
+		<div id="searchListBox" class="container" style="display: none;"></div>
+		<div id="playerE"></div>
+
+	</body>
+	<script id="navListT" type="text/template">
+		{{ for(var i = 0;it[i];i++){ }} 
+		{{ if(i==0){ }}
+		<li class="active"><a href="#">{{=it[i].title}}</a></li>
+		{{ }else{ }}
+		<li><a href="#">{{=it[i].title}}</a></li>
+		{{ } }} 
+		{{ } }}
+		<form class="navbar-form navbar-left">
+			<div class="form-group">
+				<input id="keyWord" type="text" class="form-control" placeholder="歌曲名或演唱者">
+			</div>
+			<button id="searchBtn" type="button" class="btn btn-default">搜索</button>
+		</form>  
+	</script>
+	<script id="tjListT" type="text/template">
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<h3 class="panel-title">{{=it[0].title}}</h3>
+			</div>
+			<div class="panel-body">
+		  	    <div id="{{=it[0].title}}" class="row">	
+				    {{ for(var i = 0; i<12; i++){ }}
+                    <div onclick="play(this.id)" id="{{=it[i].url}}" class="col-sm-3">
+			            <div class="thumbnail song-box">
+			                <img src="{{=it[i].albumpic_big}}">
+                            <div class="caption">
+					            <h5 class="ellipsis"><abbr title="{{=it[i].songname}}">{{=it[i].songname}}</abbr></h5>
+					            <p class="ellipsis">{{=it[i].singername}}</p>
+				            </div>
+		                </div> 
+			        </div>
+			        {{ } }}
+                </div>
+            </div>
+            <!--<div class="panel-footer" style="text-align: center;"><a id="{{=it[0].title}}" onclick="loadMore(this.id);" href="javascript:;" style="color: #999;">加载更多</a></div>-->
+		    <div class="panel-footer" style="text-align: center;"><a id="{{=it[0].title}}" onclick="loadMore(this.id);" href="javascript:;" style="color: #999;">加载更多</a></div>
+
+		</div>
+	</script> 
+	<script id="moreListT" type="text/template">
+		{{ for(var i = 0; i<4; i++){ }}
+		<div onclick="play(this.id)" id="=it[i].url" class="col-sm-3">
+		    <div class="thumbnail song-box">
+			    <img src="{{=it[i].albumpic_big}}">
+                <div class="caption">
+					<h5 class="ellipsis"><abbr title="{{=it[i].songname}}">{{=it[i].songname}}</abbr></h5>
+					<p class="ellipsis">{{=it[i].singername}}</p>
+				</div>
+		    </div> 
+		</div>
+		{{ } }}
+	</script>
+	<script id="searchListT" type="text/template">
+		<ul class="list-group">    
+		    {{ for(var i = 0; it[i]; i++){ }}
+		    <li onclick="play(this.id)" id="{{=it[i].m4a}}" class="list-group-item">
+                <div class="media">
+                    <div class="media-left media-middle">
+                        <img class="media-object" src="{{=it[i].albumpic_small}}">
+				    </div>
+				    <div class="media-body">
+				        <h4 class="media-heading">{{=it[i].songname}}</h4>
+				        <p>{{=it[i].singername}}</p>
+				        <p>{{=it[i].albumname}}</p>
+                    </div>
+                </div>
+            </li>
+			{{ } }}
+		</ul>
+	</script>
+	<script src="bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
+	<!--<script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>-->
+	<script type="text/javascript">
+		var jsonURL = 'http://route.showapi.com/213-4';
+		var jsonURL2 = 'http://route.showapi.com/213-1';
+		var songListData = {};
+		var start = 12;
+		//加载更多
+		function loadMore(id){
+			var tmpArr = [];
+			for (var i = start; i < start+4 && songListData[id][i]; i++) {
+				tmpArr.push(songListData[id][i]);
+			}
+			start += 4;
+			document.getElementById(id).innerHTML += creatDom('moreListT',tmpArr);
+		}
+        //播放音乐
+		function play(id){
+			var player = document.getElementById('playerE');
+			player.innerHTML = '';
+			player.innerHTML = '<audio src="'+id+'" autoplay="autoplay"></audio>';
+		}
+		~(function() {
+			$.getJSON('json/nav-list.json', {}, function(res) {
+				var arr = res.navList;
+				//调用js模板进行拼接
+				document.getElementById('navListBox').innerHTML = creatDom('navListT', arr);
+				//榜单type类型
+				var bdType = res.bangdan;
+				for (var i = 0; bdType[i]; i++) {
+					var obj = {};
+					obj.topid = bdType[i].type;
+					obj.listTitle = bdType[i].title;
+					getListJson(obj, i);
+				}
+				showSearch();
+			});
+		})()
+		//显示数据
+		function listShow(data) {
+			document.getElementById('tjListBox').innerHTML += creatDom('tjListT', data.showapi_res_body.pagebean.songlist);
+		}
+		//获取歌曲榜单列表
+		function getListJson(obj, i) {
+			$.getJSON(jsonURL, {
+				showapi_appid: obj.showapi_appid || '30671',
+				showapi_sign: obj.showapi_sign || 'bbeb2521b57b4944b8ac76ecc16efc8d',
+				topid: obj.topid || 5
+			},function(data){
+				data.showapi_res_body.pagebean.songlist[0].title = obj.listTitle;
+				songListData[obj.listTitle] = data.showapi_res_body.pagebean.songlist;
+				listShow(data);
+			});
+		}
+		//通过模板生成dom结构
+		function creatDom(tID, data) {
+			//获取模板的innerText
+			var inner = document.getElementById(tID).innerText;
+			//将数据与模板进行拼接
+			var dom = doT.template(inner)(data);
+			//将拼接完成的dom返回
+			return dom;
+		}
+		
+		function showSearch(){
+			var searchBtn = document.getElementById('searchBtn');
+			var keyWord = document.getElementById('keyWord');
+			searchBtn.addEventListener('click',function(){
+				var obj = {};
+				obj.keyword = keyWord.value;
+				$.getJSON(jsonURL2,{
+					showapi_appid: obj.showapi_appid || '30671',
+					showapi_sign: obj.showapi_sign || 'bbeb2521b57b4944b8ac76ecc16efc8d',
+					keyword: obj.keyword || '刘德华'
+				},function(res){
+					console.log(res);
+					$('#tjListBox').css({'display':'none'});
+					$('#searchListBox').css({'display':'block'});
+					$('#searchListBox').html(creatDom('searchListT',res.showapi_res_body.pagebean.contentlist));
+				});
+			});
+		}
+
+	</script>
+
+</html>
