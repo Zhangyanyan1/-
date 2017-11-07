@@ -1,1 +1,216 @@
-# h5Music
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="referrer" content="never"/>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+		<link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+		<style type="text/css">
+			* {
+				margin: 0;
+				padding: 0;
+			}
+			
+			ul,
+			li {
+				list-style: none;
+			}
+			
+			li {
+				/*float: left;*/
+				display: inline-block;
+			}
+			
+			.ellipsis {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			
+			abbr[title],
+			abbr[data-original-title] {
+				cursor: pointer;
+				border-bottom: none;
+				text-decoration: none;
+			}
+			.song-list-box>div{
+				cursor: pointer;
+			}
+		</style>
+
+		<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+		<script src="http://libs.cdnjs.net/dot/1.1.2/doT.min.js"></script>
+	</head>
+
+	<body>
+		<div class="container">
+			<div class="row">
+				<div class="col-xs-3">
+					<ul id="navList" class="nav nav-pills nav-stacked text-center"></ul>
+				</div>
+				<div id="list" class="col-xs-9 song-list-box"></div>
+			</div>
+		</div>
+		<div id="playerE"></div>
+	</body>
+
+	<script id="listT" type="text/template">
+		{{ for(var i = 0; i< it.length; i++){ }} 
+			<div class="col-sm-3" onclick="playSong({{=it[i].song_id}})">
+			<div class="thumbnail">
+				<img src="{{=it[i].pic_big}}">
+				<div class="caption">
+					<h5 class="ellipsis"><abbr title="{{=it[i].title}}">{{=it[i].title}}</abbr></h5>
+					<p class="ellipsis"><abbr title="{{=it[i].author}}">{{=it[i].author}}</abbr></p>
+				</div>
+			</div>
+			</div>
+			{{ } }}
+	</script>
+	<script id="navListT" type="text/template">
+		{{ for(var i = 0; i< it.length; i++){ }} 
+			<li role="presentation"><a href="javascript:;" id="{{=it[i].type}}">{{=it[i].title}}</a></li>
+		{{ } }}
+	</script>
+	<script type="text/javascript">
+		var jsonURL = 'http://tingapi.ting.baidu.com/v1/restserver/ting';
+        var bangdanList = [];
+        var song = new Object();
+        ~(function(){
+			$.get('json/music.json', {}, function(res) {
+				var data = res.bangdan;
+				//1. 找到模板
+				var listT = document.getElementById('navListT');
+				//2. 拿到模板里的内容
+				var listTinnerText = listT.innerText;
+				//3. 用数据替换模板内容
+				var dom = doT.template(listTinnerText)(data);
+				//4. 页面渲染DOM
+				document.getElementById('navList').innerHTML = dom;
+				//点击事件绑定
+				document.getElementById('navList').addEventListener('click',function(e){
+					var type = e.target.id;
+					showSongList(type);
+			    });
+			}, 'json');
+		})()
+        
+		function showSongList(type) {
+			if( bangdanList[type] ){
+				var data = bangdanList[type];
+				//1. 找到模板
+				var listT = document.getElementById('listT');
+				//2. 拿到模板里的内容
+				var listTinnerText = listT.innerText;
+				//3. 用数据替换模板内容
+				var dom = doT.template(listTinnerText)(data);
+				//4. 页面渲染DOM
+				document.getElementById('list').innerHTML = dom;
+				return;
+			}
+			$.get(jsonURL, {
+				method: 'baidu.ting.billboard.billList',
+				type: type,
+				size: '12',
+				offset: '0'
+			}, function(res) {
+				var data = res.song_list;
+				//1. 找到模板
+				var listT = document.getElementById('listT');
+				//2. 拿到模板里的内容
+				var listTinnerText = listT.innerText;
+				//3. 用数据替换模板内容
+				var dom = doT.template(listTinnerText)(data);
+				//4. 页面渲染DOM
+				document.getElementById('list').innerHTML = dom;
+				bangdanList[type] = data;
+			}, 'jsonp');
+		}
+        function playSong(id){
+        	if (song[id]) {
+        		document.getElementById('playerE').innerHTML = '<audio src="'+song[id]+'"autoplay="autoplay"></audio>';
+        	    return;
+        	}
+        	$.get(jsonURL, {
+				method: 'baidu.ting.song.play',
+				songid: id
+			}, function(res) {
+				song[id] = res.bitrate.file_link;
+				document.getElementById('playerE').innerHTML = '<audio src="'+song[id]+'"autoplay="autoplay"></audio>';
+			}, 'jsonp');
+        }
+
+
+
+		//		      ~(function(){
+		//					var obj = new Object();
+		//					obj.type = '1';
+		//					obj.tId = 'listT';
+		//					obj.pId = 'list';
+		//					getJson(obj);
+		//				})()
+		//				function getJson(obj) {
+		//					if(!obj.tId || !obj.pId){
+		//						alert('请求参数不完整！');
+		//						return;
+		//					}
+		//					$.get(jsonURL, {
+		//						method: obj.method || 'baidu.ting.billboard.billList',
+		//						type: obj.type || '24',
+		//						size: obj.size || '50',
+		//						offset: obj.offset || '0'
+		//					}, function(res) {
+		//						console.log(res);
+		//						// 页面显示
+		//						document.getElementById(obj.pId).innerHTML = createDom(obj.tId, res.song_list);
+		//					}, 'jsonp');
+		//				}
+		//		
+		//				function createDom(tId, data) {
+		//					//1. 找到模板
+		//					var listT = document.getElementById(tId);
+		//					//2. 拿到模板里的内容
+		//					var listTinnerText = listT.innerText;
+		//					//3. 用数据替换模板内容
+		//					var dom = doT.template(listTinnerText)(data);
+		//					//4.返回拼接完成的dom结构
+		//					return dom;
+		//				}
+
+		//		var data = {
+		//			"code": "200",
+		//			"msg": "xxx",
+		//			"data": [
+		//				{
+		//					"name": "张三"
+		//				},
+		//				{
+		//					"name": "李四"
+		//				},
+		//				{
+		//					"name": "王五"
+		//				},
+		//				{
+		//					"name": "赵六"
+		//				}
+		//			]
+		//		}
+		//		var listT = document.getElementById('listT');
+		//		var listTinnerText = listT.innerText;
+		//		var dom = doT.template(listTinnerText)(data.data);
+		//		document.getElementById('list').innerHTML = dom;
+		//		console.log(dom);
+		//		var str = '';
+		//		var k = 'name';
+		//		for(var i = 0; i < data.data.length; i++){
+		//			str += '<li>'+data.data[i][k]+'</li>';
+		//		}
+		//		document.getElementById('list').innerHTML = str;
+	</script>
+	<!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+	<script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+</html>
